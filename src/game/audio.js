@@ -41,6 +41,13 @@ function getContext ()
     return ctx;
 }
 
+//  Call from a tap or key press: phones only allow sound to start during one,
+//  and creating the context mid-game causes a hitch
+export function unlockAudio ()
+{
+    getContext();
+}
+
 function tone (ac, freqStart, freqEnd, duration, volume, delay = 0)
 {
     const t = ac.currentTime + delay;

@@ -1,6 +1,6 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
-import { playChime, playPop, playThud } from '../audio';
+import { playChime, playPop, playThud, unlockAudio } from '../audio';
 import { getChallenge, shareResult } from '../share';
 import { addButton, TEXT_STYLE } from '../ui';
 
@@ -46,6 +46,7 @@ export class HeartGame extends Scene
         this.hearts = 0;
         this.isPlaying = false;     //  false while choosing the time, and after time's up
         this.items = [];            //  everything that is currently falling
+        this.floatPool = {};        //  reusable "+1" / "-2" labels, see floatText()
 
         //  If the page was opened from a partner's link, this holds their name, score and round time
         this.challenge = getChallenge();
@@ -141,6 +142,9 @@ export class HeartGame extends Scene
             }
 
             started = true;
+            //  Start the sound engine now, while the player is tapping, not mid-game
+            unlockAudio();
+
             picker.forEach((object) => object.destroy());
             buttons.forEach(({ button, text }) => {
                 button.destroy();
@@ -304,13 +308,24 @@ export class HeartGame extends Scene
         this.timeText.setText(`Time: ${Math.ceil(this.timeLeft)}`);
     }
 
+    //  Making a new text is slow on phones (Phaser measures and draws it from scratch),
+    //  so each "+1" / "-2" label is made once and then reused
     floatText (x, y, message, color)
     {
-        const text = this.add.text(x, y - 30, message, { ...TEXT_STYLE, fontSize: 32, color, strokeThickness: 6 }).setOrigin(0.5);
+        const pool = this.floatPool[message] || (this.floatPool[message] = []);
+        let text = pool.find((other) => !other.visible);
+
+        if (!text)
+        {
+            text = this.add.text(0, 0, message, { ...TEXT_STYLE, fontSize: 32, color, strokeThickness: 6 }).setOrigin(0.5);
+            pool.push(text);
+        }
+
+        text.setPosition(x, y - 30).setAlpha(1).setVisible(true);
 
         this.tweens.add({
             targets: text, y: y - 100, alpha: 0, duration: 700,
-            onComplete: () => text.destroy()
+            onComplete: () => text.setVisible(false)
         });
     }
 

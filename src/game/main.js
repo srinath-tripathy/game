@@ -15,6 +15,10 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
+    //  Ask phones for their faster GPU mode
+    render: {
+        powerPreference: 'high-performance'
+    },
     //  Sound effects are synthesised in audio.js, so Phaser's sound system isn't needed
     audio: {
         noAudio: true
